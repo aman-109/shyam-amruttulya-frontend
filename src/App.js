@@ -17,21 +17,56 @@ function currency(n) {
   return `₹${n}`;
 }
 
+// ------------------------------
+// DEFAULT CATEGORIES (fallback)
+// ------------------------------
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: "Tea", price: 10, count: 0 },
+  { id: 2, name: "Coffee", price: 20, count: 0 },
+  { id: 3, name: "Black Coffee", price: 15, count: 0 },
+  { id: 4, name: "Cigarette (₹10)", price: 10, count: 0 },
+  { id: 5, name: "Cigarette (₹12)", price: 12, count: 0 },
+  { id: 6, name: "Cigarette (₹17)", price: 17, count: 0 },
+  { id: 7, name: "Cigarette (₹20)", price: 20, count: 0 },
+  { id: 8, name: "Biscuits", price: 5, count: 0 },
+  { id: 9, name: "Sweet", price: 5, count: 0 },
+  { id: 10, name: "Water Bottle (Small)", price: 10, count: 0 },
+  { id: 11, name: "Water Bottle (Large)", price: 20, count: 0 },
+  { id: 12, name: "Doughnut", price: 10, count: 0 },
+];
+
 export default function App() {
   requireAuth();
 
   const [tab, setTab] = useState("dashboard");
-  const [today, setToday] = useState(null); // { date, categories[] }
-  const [reports, setReports] = useState([]); // list from backend
+  const [today, setToday] = useState(null);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // FETCH INITIAL DATA and MERGE today's report into today.categories
+  // ------------------------------
+  // FETCH INITIAL DATA
+  // ------------------------------
   useEffect(() => {
     async function load() {
       setLoading(true);
       const res = await api("/data");
 
-      const apiToday = res.today;
+      let apiToday = res.today;
+
+      // FRESH USER / BROKEN TODAY → USE DEFAULT
+      if (
+        !apiToday ||
+        !apiToday.categories ||
+        !Array.isArray(apiToday.categories) ||
+        apiToday.categories.length === 0
+      ) {
+        apiToday = {
+          date: dayjs().format("YYYY-MM-DD"),
+          categories: DEFAULT_CATEGORIES,
+        };
+      }
+
+      // MERGE WITH TODAY'S REPORT (if exists)
       const reportForToday = res.reports.find((r) => r.date === apiToday.date);
 
       let mergedToday = apiToday;
@@ -39,10 +74,10 @@ export default function App() {
         mergedToday = {
           ...apiToday,
           categories: apiToday.categories.map((cat) => {
-            const repItem = reportForToday.items.find(
+            const rep = reportForToday.items.find(
               (i) => Number(i.id) === Number(cat.id)
             );
-            return repItem ? { ...cat, count: repItem.count } : cat;
+            return rep ? { ...cat, count: rep.count } : cat;
           }),
         };
       }
@@ -51,6 +86,7 @@ export default function App() {
       setReports(res.reports);
       setLoading(false);
     }
+
     load();
   }, []);
 
@@ -58,10 +94,24 @@ export default function App() {
 
   const categories = today.categories;
 
-  // helper to reload fresh canonical data
+  // Reload helper
   const reloadAll = async () => {
     const res = await api("/data");
-    const apiToday = res.today;
+
+    let apiToday = res.today;
+
+    if (
+      !apiToday ||
+      !apiToday.categories ||
+      !Array.isArray(apiToday.categories) ||
+      apiToday.categories.length === 0
+    ) {
+      apiToday = {
+        date: dayjs().format("YYYY-MM-DD"),
+        categories: DEFAULT_CATEGORIES,
+      };
+    }
+
     const reportForToday = res.reports.find((r) => r.date === apiToday.date);
 
     let mergedToday = apiToday;
@@ -69,10 +119,10 @@ export default function App() {
       mergedToday = {
         ...apiToday,
         categories: apiToday.categories.map((cat) => {
-          const repItem = reportForToday.items.find(
+          const rep = reportForToday.items.find(
             (i) => Number(i.id) === Number(cat.id)
           );
-          return repItem ? { ...cat, count: repItem.count } : cat;
+          return rep ? { ...cat, count: rep.count } : cat;
         }),
       };
     }
@@ -81,44 +131,65 @@ export default function App() {
     setReports(res.reports);
   };
 
-  // UPDATE COUNT (send new today and then reload)
+  // ------------------------------
+  // OPTIMISTIC UPDATE: updateCount
+  // ------------------------------
   const updateCount = async (id, delta) => {
-    const newCats = categories.map((c) =>
+    // Optimistic update (instant UI)
+    setToday((prev) => {
+      const newCats = prev.categories.map((c) =>
+        c.id === id ? { ...c, count: Math.max(0, c.count + delta) } : c
+      );
+      return { ...prev, categories: newCats };
+    });
+
+    // Send only updated category to backend
+    const updatedCat = today.categories.map((c) =>
       c.id === id ? { ...c, count: Math.max(0, c.count + delta) } : c
     );
-    const newToday = { date: today.date, categories: newCats };
 
     await api("/today", {
       method: "POST",
-      body: JSON.stringify({ today: newToday }),
+      body: JSON.stringify({
+        today: {
+          date: today.date,
+          categories: updatedCat,
+        },
+      }),
     });
 
-    // reload canonical state
-    await reloadAll();
+    // ❌ NO reloadAll() — avoids overwriting local UI with older server response
   };
 
   const resetCategory = async (id) => {
-    const newCats = categories.map((c) =>
+    const optimisticCats = categories.map((c) =>
       c.id === id ? { ...c, count: 0 } : c
     );
-    const newToday = { date: today.date, categories: newCats };
+
+    setToday({ date: today.date, categories: optimisticCats });
 
     await api("/today", {
       method: "POST",
-      body: JSON.stringify({ today: newToday }),
+      body: JSON.stringify({
+        today: { date: today.date, categories: optimisticCats },
+      }),
     });
-    await reloadAll();
+
+    reloadAll();
   };
 
   const resetAll = async () => {
-    const newCats = categories.map((c) => ({ ...c, count: 0 }));
-    const newToday = { date: today.date, categories: newCats };
+    const optimisticCats = categories.map((c) => ({ ...c, count: 0 }));
+    setToday({ date: today.date, categories: optimisticCats });
 
     await api("/today", {
       method: "POST",
-      body: JSON.stringify({ today: newToday }),
+      body: JSON.stringify({
+        today: { date: today.date, categories: optimisticCats },
+      }),
     });
-    await reloadAll();
+
+    reloadAll();
   };
 
   // DAILY SUMMARY
@@ -132,28 +203,29 @@ export default function App() {
   // CLOSE DAY
   const closeDay = async () => {
     const res = await api("/close", { method: "POST" });
-    // /close returns canonical today & reports
     setToday(res.today);
     setReports(res.reports);
     alert("Day closed and saved.");
     setTab("monthly");
   };
 
+  // DELETE REPORT
   const deleteReport = async (id) => {
     if (!window.confirm("Delete this report?")) return;
     await api(`/reports/${id}`, { method: "DELETE" });
     setReports(reports.filter((r) => r._id !== id));
   };
 
-  // PDF & CSV exports
+  // PDF & CSV EXPORTS
   const exportReportPDF = (report) => {
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text("Tea Shop - Daily Report", 14, 18);
+
     doc.setFontSize(11);
     doc.text(`Date: ${report.date}`, 14, 26);
     doc.text(
-      `Total Qty: ${report.totalQty}    Total Amount: ₹${report.totalAmount}`,
+      `Total Qty: ${report.totalQty}   Total Amount: ₹${report.totalAmount}`,
       14,
       33
     );
@@ -171,6 +243,7 @@ export default function App() {
     const rows = [
       ["Date", "Item", "Qty", "Price", "Amount", "Total Qty", "Total Amount"],
     ];
+
     reports.forEach((r) => {
       if (!r.items.length) {
         rows.push([r.date, "—", 0, 0, 0, r.totalQty, r.totalAmount]);
@@ -183,45 +256,49 @@ export default function App() {
         });
       }
     });
+
     saveAs(
       new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" }),
       `reports-${dayjs().format("YYYYMMDD")}.csv`
     );
   };
 
+  // ------------------------------
+  // UI
+  // ------------------------------
   return (
     <div className="app">
       <header className="topbar">
-        
-          <img
-            style={{ cursor: "pointer", paddingLeft: "10px" }}
-            src={'/logo196.png'}
-            alt="Logo"
-            height={80}
-            width={100}
-            className="logo"
-            onClick={async () => {
-              setTab("dashboard");
-              await reloadAll();
-            }}
-          />
-        
-        <nav style={{ display: "flex", float:'right'}}>
+        <img
+          style={{ cursor: "pointer", paddingLeft: "10px" }}
+          src={"/logo196.png"}
+          alt="Logo"
+          height={80}
+          width={100}
+          onClick={() => {
+            setTab("dashboard");
+            reloadAll();
+          }}
+        />
+
+        <nav style={{ display: "flex", float: "right" }}>
           <button
             className={tab === "dashboard" ? "active" : ""}
-            onClick={async () => {
+            onClick={() => {
               setTab("dashboard");
-              await reloadAll();
+              reloadAll();
             }}
           >
             Dashboard
           </button>
+
           <button
             className={tab === "daily" ? "active" : ""}
             onClick={() => setTab("daily")}
           >
             Daily Report
           </button>
+
           <button
             className={tab === "monthly" ? "active" : ""}
             onClick={() => setTab("monthly")}
@@ -231,7 +308,9 @@ export default function App() {
         </nav>
       </header>
 
+      {/* MAIN CONTENT */}
       <main className="container">
+        {/* DASHBOARD */}
         {tab === "dashboard" && (
           <>
             <section className="grid">
@@ -283,8 +362,8 @@ export default function App() {
               <div className="actions">
                 <button
                   className="primary"
-                  onClick={closeDay}
                   disabled={dailyTotalQty === 0}
+                  onClick={closeDay}
                 >
                   Close Day & Save
                 </button>
@@ -294,9 +373,11 @@ export default function App() {
           </>
         )}
 
+        {/* DAILY LIVE REPORT */}
         {tab === "daily" && (
           <section className="report-view">
             <h2>Today's Live Report — {today.date}</h2>
+
             <table className="table">
               <thead>
                 <tr>
@@ -316,6 +397,7 @@ export default function App() {
                   </tr>
                 ))}
               </tbody>
+
               <tfoot>
                 <tr>
                   <td>
@@ -344,11 +426,12 @@ export default function App() {
                 })
               }
             >
-              Download Today’s PDF
+              Download Today's PDF
             </button>
           </section>
         )}
 
+        {/* MONTHLY REPORT */}
         {tab === "monthly" && (
           <section className="monthly">
             <div className="monthly-top">
@@ -372,6 +455,7 @@ export default function App() {
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {reports.map((r) => (
                   <tr key={r._id}>
@@ -379,8 +463,7 @@ export default function App() {
                     <td>{r.totalQty}</td>
                     <td>{currency(r.totalAmount)}</td>
                     <td>
-                      <button onClick={() => exportReportPDF(r)}>PDF</button>
-                      <span>{" "}</span>
+                      <button onClick={() => exportReportPDF(r)}>PDF</button>{" "}
                       <button
                         className="danger"
                         onClick={() => deleteReport(r._id)}
@@ -393,9 +476,11 @@ export default function App() {
               </tbody>
             </table>
 
+            {/* DETAILS SECTION */}
             {reports.map((r) => (
               <details key={`d-${r._id}`} className="report-details">
                 <summary>Details — {r.date}</summary>
+
                 <table className="table small">
                   <thead>
                     <tr>
@@ -405,6 +490,7 @@ export default function App() {
                       <th>Amount</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {r.items.map((it) => (
                       <tr key={it.name}>
@@ -414,6 +500,7 @@ export default function App() {
                         <td>{currency(it.amount)}</td>
                       </tr>
                     ))}
+
                     <tr>
                       <td>
                         <strong>Total</strong>
