@@ -1,0 +1,81 @@
+.login-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f7fb;
+}
+
+.login-card {
+  background: #fff;
+  padding: 32px;
+  width: 350px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.phone-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 16px;
+}
+
+.otp-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.otp-input {
+  width: 50px;
+  height: 55px;
+  text-align: center;
+  font-size: 24px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.next-btn {
+  width: 100%;
+  padding: 12px;
+  background: #0a84ff;
+  color: white;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.next-btn:disabled {
+  background: #9cc9ff;
+}
+
+.back-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: #0a84ff;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+  margin-bottom: 10px;
+}
