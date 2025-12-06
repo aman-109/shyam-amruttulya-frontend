@@ -1,0 +1,55 @@
+/* App.css - simple, clean styles */
+:root{
+  --bg:#f6f8fb;
+  --card:#fff;
+  --accent:#1e90ff;
+  --danger:#e94b35;
+  --muted:#6b7280;
+}
+
+*{box-sizing:border-box}
+body,html,#root{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+
+.app{min-height:100%;display:flex;flex-direction:column;background:var(--bg);color:#111}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(90deg,#ffffff88,#eaf2ff);border-bottom:1px solid #e6eefc}
+.topbar h1{margin:0;font-size:18px}
+.topbar nav button{margin-left:8px;padding:8px 12px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer}
+.topbar nav button.active{background:var(--accent);color:white;border-color:rgba(0,0,0,0.05)}
+
+.container{padding:18px;flex:1;max-width:1100px;margin:18px auto;width:95%}
+
+/* Dashboard grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 16px rgba(20,40,80,0.04);display:flex;flex-direction:column;gap:10px}
+.card-header{display:flex;align-items:center;justify-content:space-between}
+.card-header h3{margin:0;font-size:16px}
+.price{color:var(--muted);font-size:13px}
+.reset-small{background:#f2f2f2;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
+.counter{display:flex;align-items:center;justify-content:center;gap:12px}
+.btn{width:44px;height:44px;border-radius:10px;border:none;background:#f4f6fb;font-size:20px;cursor:pointer}
+.count{font-weight:700;font-size:20px;min-width:36px;text-align:center}
+.amount{text-align:center;color:var(--accent);font-weight:700}
+
+/* summary */
+.summary{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-top:18px;padding:12px;background:linear-gradient(90deg,#fff,#f8fbff);border-radius:12px;box-shadow:0 6px 16px rgba(20,40,80,0.03)}
+.actions button{margin-left:8px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
+.primary{background:var(--accent);color:white}
+.primary:disabled{opacity:0.5;cursor:not-allowed}
+
+/* report views */
+.table{width:100%;border-collapse:collapse;margin-top:12px;background:transparent}
+.table thead th{background:#f3f6ff;padding:10px;text-align:left;border-bottom:1px solid #e8eefb}
+.table td, .table th{padding:10px;border-bottom:1px solid #f0f4fb}
+.table.small td, .table.small th{padding:8px;font-size:13px}
+.monthly-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.monthly-actions button{margin-left:8px;padding:8px 12px;border-radius:8px;border:none;background:#f4f6fb;cursor:pointer}
+.danger{background:var(--danger);color:white;padding:6px 8px;border:none;border-radius:6px;cursor:pointer}
+.report-details summary{cursor:pointer;padding:10px;background:#fff;border-radius:8px;margin-top:10px;box-shadow:0 6px 14px rgba(20,40,80,0.03)}
+
+.footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+@media (max-width:640px){
+  .summary{flex-direction:column;align-items:flex-start}
+}
+
+
+
