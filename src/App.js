@@ -148,7 +148,7 @@ export default function App() {
       c.id === id ? { ...c, count: Math.max(0, c.count + delta) } : c
     );
 
-    await api("/today", {
+    const res = await api("/today", {
       method: "POST",
       body: JSON.stringify({
         today: {
@@ -157,6 +157,8 @@ export default function App() {
         },
       }),
     });
+
+    setReports(res.reports)
 
     // ❌ NO reloadAll() — avoids overwriting local UI with older server response
   };
