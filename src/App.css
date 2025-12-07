@@ -53,3 +53,23 @@ body,html,#root{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto
 
 
 
+.floating-bubble {
+  position: absolute;
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 1;
+  transform: translateY(0);
+  animation: bubbleUp 0.7s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes bubbleUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(1.2);
+  }
+}

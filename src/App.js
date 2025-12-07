@@ -33,6 +33,8 @@ const DEFAULT_CATEGORIES = [
   { id: 10, name: "Water Bottle (Small)", price: 10, count: 0 },
   { id: 11, name: "Water Bottle (Large)", price: 20, count: 0 },
   { id: 12, name: "Doughnut", price: 10, count: 0 },
+  { id: 13, name: "Cigarette (₹15)", price: 15, count: 0 },
+  { id: 14, name: "Tea (Bank)", price: 8, count: 0 },
 ];
 
 export default function App() {
@@ -131,37 +133,60 @@ export default function App() {
     setReports(res.reports);
   };
 
-  // ------------------------------
-  // OPTIMISTIC UPDATE: updateCount
-  // ------------------------------
-  const updateCount = async (id, delta) => {
-    // Optimistic update (instant UI)
-    setToday((prev) => {
-      const newCats = prev.categories.map((c) =>
-        c.id === id ? { ...c, count: Math.max(0, c.count + delta) } : c
-      );
-      return { ...prev, categories: newCats };
-    });
+ // call this from + / - buttons
+const handleCountChange = (id, delta) => {
+  // compute new categories array locally (no reliance on stale `today`)
+  const newCats = today.categories.map((c) =>
+    c.id === id ? { ...c, count: Math.max(0, c.count + delta), bubble: delta } : c
+  );
 
-    // Send only updated category to backend
-    const updatedCat = today.categories.map((c) =>
-      c.id === id ? { ...c, count: Math.max(0, c.count + delta) } : c
-    );
+  // update UI immediately (optimistic)
+  setToday((prev) => ({ ...prev, categories: newCats }));
 
-    const res = await api("/today", {
-      method: "POST",
-      body: JSON.stringify({
-        today: {
-          date: today.date,
-          categories: updatedCat,
-        },
-      }),
-    });
+  // remove bubble after 700ms
+  setTimeout(() => {
+    setToday((prev) => ({
+      ...prev,
+      categories: prev.categories.map((c) =>
+        c.id === id ? { ...c, bubble: null } : c
+      ),
+    }));
+  }, 200);
 
-    setReports(res.reports)
+  // async persist to backend (send the full updated categories array we computed)
+  updateCountSave(newCats, today.date).catch((err) => {
+    console.error("save /today failed:", err);
+    // optional: rollback UI or show toast. For now we keep optimistic UI.
+  });
+};
 
-    // ❌ NO reloadAll() — avoids overwriting local UI with older server response
+// send server the full categories array (no local state changes here)
+const updateCountSave = async (updatedCategories, date) => {
+  // prepare payload exactly as backend expects
+  const payload = {
+    today: {
+      date: date || dayjs().format("YYYY-MM-DD"),
+      categories: updatedCategories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        price: c.price,
+        count: Number(c.count || 0),
+      })),
+    },
   };
+
+  const res = await api("/today", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  // backend returns updated reports (and possibly updated today). Update reports from server
+  if (res && res.reports) {
+    setReports(res.reports);
+  }
+  // If backend returns canonical today and you want to reconcile:
+  // if (res && res.today) setToday(res.today);
+};
 
   const resetCategory = async (id) => {
     const optimisticCats = categories.map((c) =>
@@ -273,7 +298,7 @@ export default function App() {
       <header className="topbar">
         <img
           style={{ cursor: "pointer", paddingLeft: "10px" }}
-          src={"/logo196.png"}
+          src={"/logo196.jpg"}
           alt="Logo"
           height={80}
           width={100}
@@ -331,20 +356,36 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="counter">
+                  <div className="counter" style={{ position: "relative" }}>
                     <button
                       className="btn"
-                      onClick={() => updateCount(c.id, -1)}
+                      onClick={() => handleCountChange(c.id, -1)}
                     >
                       -
                     </button>
+
                     <div className="count">{c.count}</div>
+
                     <button
                       className="btn"
-                      onClick={() => updateCount(c.id, 1)}
+                      onClick={() => handleCountChange(c.id, +1)}
                     >
                       +
                     </button>
+
+                    {/* Bubble animation */}
+                    {c.bubble && (
+                      <div
+                        className="floating-bubble"
+                        style={{
+                          left: "50%",
+                          top: "-10px",
+                          color: c.bubble > 0 ? "green" : "red",
+                        }}
+                      >
+                        {c.bubble > 0 ? `+${c.bubble}` : c.bubble}
+                      </div>
+                    )}
                   </div>
 
                   <div className="amount">{currency(c.count * c.price)}</div>
