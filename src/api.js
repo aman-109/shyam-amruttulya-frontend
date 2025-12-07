@@ -1,6 +1,8 @@
 // src/api.js
 export async function api(path, opts = {}) {
-  const base = process.env.REACT_APP_API_BASE || "http://localhost:5010/api";
+  const base =
+    process.env.REACT_APP_API_BASE ||
+    "https://shyam-amruttulya-backend-service.onrender.com/api";
   const token = localStorage.getItem("token");
   const headers = Object.assign({}, opts.headers || {}, {
     "Content-Type": "application/json",
