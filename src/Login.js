@@ -64,6 +64,7 @@ export default function Login() {
         {/* STEP 1 → ENTER PHONE */}
         {step === 1 && (
           <>
+          <h1 className="text-3xl font-bold text-blue-600">Tailwind Works!</h1>
             <h2>Login</h2>
             <p className="subtitle">Enter your mobile number</p>
 
