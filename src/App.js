@@ -105,12 +105,39 @@ export default function App() {
 
   if (loading || !today) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(0deg,#fff6ed,#fffdf9)] dark:bg-gradient-to-b dark:from-[#2b1e19] dark:to-[#1b1310]">
-        <div className="text-center">
-          <div className="animate-pulse text-2xl font-semibold text-amber-800 dark:text-amber-300">
-            Loading Tea-Shop...
-          </div>
+      <div
+        className="min-h-screen flex flex-col items-center justify-center 
+      bg-[linear-gradient(180deg,#fff7ee,#fff9f5)] dark:bg-[#1a120f]"
+      >
+        <div className="relative">
+          {/* Cup Logo */}
+          <img
+            src="/logo196.jpg"
+            className="w-28 h-28 rounded-full shadow-xl animate-float"
+          />
         </div>
+
+        <p className="mt-6 text-lg font-semibold text-amber-800 dark:text-amber-200 animate-fadeInSlow">
+          Loading Tea-Shop...
+        </p>
+
+        <style>{`
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+          }
+          .animate-fadeInSlow {
+            animation: fadeInSlow 1.5s ease;
+          }
+          @keyframes fadeInSlow {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -300,7 +327,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#fff7ee,#fff9f5)] dark:bg-gradient-to-b dark:from-[#261812] dark:to-[#120908] transition-colors">
       {/* Top bar */}
-      <header className="flex items-center justify-between px-4 py-3 shadow-sm backdrop-blur-sm bg-white/60 dark:bg-[#2a1a14]/60">
+      <header className="flex items-center justify-between px-4 py-3 shadow-sm backdrop-blur-sm bg-white/60 dark:bg-[#3a2218]/70 border dark:border-amber-900/20">
         <div className="flex items-center gap-3">
           <img
             src="/logo196.jpg"
@@ -435,7 +462,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={resetAll}
-                  className="px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-800"
+                  className="px-4 py-2 rounded-lg border border-amber-200 dark:text-amber-200 dark:border-amber-800"
                 >
                   Reset All
                 </button>
