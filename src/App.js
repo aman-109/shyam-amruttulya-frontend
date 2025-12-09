@@ -15,6 +15,12 @@ import { api } from "./api";
 function requireAuth() {
   const token = localStorage.getItem("token");
   if (!token) window.location.href = "/login";
+
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  if (payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
 }
 
 function currency(n) {
