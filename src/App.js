@@ -283,12 +283,6 @@ export default function App() {
     }
   };
 
-  const deleteReport = async (id) => {
-    if (!window.confirm("Delete this report?")) return;
-    await api(`/reports/${id}`, { method: "DELETE" });
-    setReports((prev) => prev.filter((r) => r._id !== id));
-  };
-
   // Exports (same as before)
   const exportReportPDF = (report) => {
     const doc = new jsPDF();
@@ -351,18 +345,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200">
-            <input type="checkbox" className="hidden" checked={dark} onChange={(e) => setDark(e.target.checked)} />
-            <div
-              onClick={() => setDark((v) => !v)}
-              className="relative w-12 h-6 rounded-full bg-amber-200/80 dark:bg-amber-800/30 p-0.5 cursor-pointer"
-              role="switch"
-              aria-checked={dark}
-            >
-              <div className={`w-5 h-5 bg-white rounded-full shadow transform transition ${dark ? "translate-x-6" : "translate-x-0"}`} />
-            </div>
-            <span className="select-none">{dark ? "Dark" : "Light"}</span>
-          </label> */}
+         
           <button
             onClick={() => {
               document.documentElement.classList.toggle("dark");
@@ -401,20 +384,21 @@ export default function App() {
                         {currency(c.price)}
                       </div>
                     </div>
-                    <button
+                    {/* <button
                       onClick={() => resetCategory(c.id)}
                       className="text-xs px-2 py-1 rounded bg-amber-100/60 dark:bg-transparent border border-amber-100 text-amber-800 dark:text-amber-200"
                     >
                       Reset
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
                         aria-label="decrement"
+                        disabled={c.count === 0}
                         onClick={() => handleCountChange(c.id, -1)}
-                        className="w-10 h-10 rounded-lg bg-amber-100/60 flex items-center justify-center font-bold text-xl"
+                        className="w-10 h-10 disabled:cursor-not-allowed disabled:opacity-50  rounded-lg bg-amber-100/60 flex items-center justify-center font-bold text-xl"
                       >
                         -
                       </button>
@@ -466,12 +450,12 @@ export default function App() {
                 >
                   Close Day & Save
                 </button>
-                <button
+                {/* <button
                   onClick={resetAll}
                   className="px-4 py-2 rounded-lg border border-amber-200 dark:text-amber-200 dark:border-amber-800"
                 >
                   Reset All
-                </button>
+                </button> */}
               </div>
             </div>
           </section>
